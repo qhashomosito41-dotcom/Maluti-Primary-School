@@ -1,0 +1,496 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Maluti Primary School</title>
+  <link rel="stylesheet" href="theme.css"/>
+  <style>
+    body { overflow-x: hidden; font-family: var(--font-body); }
+
+    /* ── Hero background ── */
+    .hero-bg {
+      position: fixed; inset: 0; z-index: -1;
+      background: var(--bg);
+    }
+    .hero-bg::before {
+      content: '';
+      position: absolute; inset: 0;
+      background: radial-gradient(ellipse 80% 60% at 60% 30%, rgba(249,115,22,0.12) 0%, transparent 60%),
+                  radial-gradient(ellipse 50% 40% at 20% 80%, rgba(59,130,246,0.08) 0%, transparent 50%);
+    }
+    .hero-bg .grid-overlay {
+      position: absolute; inset: 0;
+      background-image: linear-gradient(var(--border) 1px, transparent 1px),
+                        linear-gradient(90deg, var(--border) 1px, transparent 1px);
+      background-size: 60px 60px;
+      opacity: 0.4;
+    }
+
+    /* ── Navbar ── */
+    .navbar {
+      position: fixed; top: 0; left: 0; right: 0; z-index: 100;
+      background: var(--navbar-bg);
+      border-bottom: 1px solid var(--border);
+      backdrop-filter: blur(16px);
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 0 48px; height: 68px;
+      transition: var(--transition);
+    }
+    .nav-brand { display: flex; align-items: center; gap: 12px; text-decoration: none; }
+    .nav-logo {
+      width: 38px; height: 38px; border-radius: 10px;
+      background: var(--accent);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 18px; font-weight: 800; color: #fff;
+      font-family: var(--font-main);
+      box-shadow: 0 4px 14px rgba(249,115,22,0.4);
+    }
+    .nav-brand-text { font-family: var(--font-main); font-size: 16px; font-weight: 700; color: var(--text); }
+    .nav-links { display: flex; align-items: center; gap: 4px; }
+    .nav-links a {
+      padding: 8px 16px; border-radius: var(--radius-sm);
+      color: var(--text-muted); font-size: 14px; font-weight: 500;
+      font-family: var(--font-main);
+      text-decoration: none; transition: var(--transition); cursor: pointer;
+    }
+    .nav-links a:hover { color: var(--text); background: var(--bg3); }
+    .nav-actions { display: flex; align-items: center; gap: 10px; }
+
+    /* ── Hero ── */
+    .hero {
+      min-height: 100vh;
+      display: flex; align-items: center; justify-content: center;
+      padding: 100px 48px 60px;
+      text-align: center;
+    }
+    .hero-inner { max-width: 780px; }
+    .hero-badge {
+      display: inline-flex; align-items: center; gap: 8px;
+      padding: 6px 16px; border-radius: 99px;
+      background: rgba(249,115,22,0.1); border: 1px solid rgba(249,115,22,0.25);
+      color: var(--accent); font-size: 12px; font-weight: 700;
+      font-family: var(--font-main); letter-spacing: 0.5px;
+      margin-bottom: 28px; animation: fadeUp 0.5s ease both;
+    }
+    .hero-title {
+      font-size: clamp(40px, 6vw, 72px); font-weight: 800;
+      font-family: var(--font-main); line-height: 1.08;
+      letter-spacing: -2px; color: var(--text);
+      animation: fadeUp 0.5s 0.1s ease both;
+    }
+    .hero-title span { color: var(--accent); }
+    .hero-sub {
+      font-size: 18px; color: var(--text-muted); margin-top: 20px;
+      max-width: 540px; margin-left: auto; margin-right: auto;
+      animation: fadeUp 0.5s 0.18s ease both;
+      line-height: 1.7;
+    }
+    .hero-actions {
+      display: flex; align-items: center; gap: 14px;
+      justify-content: center; flex-wrap: wrap;
+      margin-top: 36px;
+      animation: fadeUp 0.5s 0.26s ease both;
+    }
+    .hero-stats {
+      display: flex; align-items: center; gap: 40px;
+      justify-content: center; margin-top: 56px;
+      animation: fadeUp 0.5s 0.34s ease both;
+    }
+    .hero-stat-val { font-family: var(--font-main); font-size: 28px; font-weight: 800; color: var(--text); }
+    .hero-stat-label { font-size: 12px; color: var(--text-muted); margin-top: 2px; }
+    .hero-stat-divider { width: 1px; height: 40px; background: var(--border); }
+
+    /* ── Page Sections ── */
+    .page-section { display: none; padding: 120px 48px 60px; min-height: 100vh; }
+    .page-section.active { display: block; }
+
+    .about-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 28px; max-width: 900px; margin: 40px auto 0; }
+    .about-card {
+      background: var(--card-bg); border: 1px solid var(--border);
+      border-radius: var(--radius); padding: 28px;
+      transition: var(--transition);
+    }
+    .about-card:hover { border-color: rgba(249,115,22,0.3); transform: translateY(-3px); }
+    .about-card-icon { font-size: 32px; margin-bottom: 14px; }
+    .about-card h3 { font-family: var(--font-main); font-size: 16px; margin-bottom: 10px; }
+    .about-card p { font-size: 14px; color: var(--text-muted); line-height: 1.7; }
+
+    .contact-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; max-width: 640px; margin: 40px auto 0; }
+    .contact-item {
+      background: var(--card-bg); border: 1px solid var(--border);
+      border-radius: var(--radius); padding: 24px;
+      transition: var(--transition);
+    }
+    .contact-item:hover { border-color: rgba(249,115,22,0.3); }
+    .contact-item .ci-icon { font-size: 28px; margin-bottom: 10px; }
+    .contact-item h4 { font-family: var(--font-main); font-size: 13px; font-weight: 700; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 6px; }
+    .contact-item p { font-size: 14px; color: var(--text); font-weight: 500; }
+
+    .page-hero { text-align: center; max-width: 600px; margin: 0 auto 50px; }
+    .page-hero h1 { font-size: clamp(30px, 4vw, 48px); font-weight: 800; font-family: var(--font-main); }
+    .page-hero p { font-size: 16px; color: var(--text-muted); margin-top: 12px; }
+
+    /* ── Auth Modal ── */
+    .auth-overlay {
+      position: fixed; inset: 0; z-index: 200;
+      background: var(--overlay); backdrop-filter: blur(6px);
+      display: none; align-items: center; justify-content: center;
+      padding: 20px;
+    }
+    .auth-overlay.open { display: flex; }
+    .auth-box {
+      background: var(--bg2); border: 1px solid var(--border);
+      border-radius: 20px; padding: 40px;
+      width: 100%; max-width: 420px;
+      box-shadow: var(--shadow-lg);
+      animation: modalIn 0.25s ease;
+      position: relative;
+    }
+    .auth-close {
+      position: absolute; top: 16px; right: 16px;
+      width: 32px; height: 32px; border-radius: 8px;
+      background: var(--bg3); border: 1px solid var(--border);
+      color: var(--text-muted); font-size: 16px;
+      cursor: pointer; display: flex; align-items: center; justify-content: center;
+      transition: var(--transition);
+    }
+    .auth-close:hover { color: var(--text); background: var(--bg4); }
+    .auth-brand { text-align: center; margin-bottom: 28px; }
+    .auth-brand .auth-icon {
+      width: 52px; height: 52px; border-radius: 14px;
+      background: rgba(249,115,22,0.15); border: 1px solid rgba(249,115,22,0.3);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 26px; margin: 0 auto 14px;
+    }
+    .auth-brand h2 { font-family: var(--font-main); font-size: 22px; font-weight: 800; }
+    .auth-brand p { font-size: 13px; color: var(--text-muted); margin-top: 4px; }
+
+    .credentials-hint {
+      background: rgba(59,130,246,0.08); border: 1px solid rgba(59,130,246,0.2);
+      border-radius: 10px; padding: 14px 16px; margin-bottom: 20px;
+      font-size: 12px; color: var(--text-muted);
+    }
+    .credentials-hint strong { color: var(--accent2); display: block; margin-bottom: 6px; }
+    .credentials-hint code {
+      display: block; line-height: 1.8;
+      font-family: monospace; font-size: 11.5px;
+    }
+
+    .error-msg {
+      background: rgba(239,68,68,0.1); border: 1px solid rgba(239,68,68,0.25);
+      border-radius: 8px; padding: 10px 14px;
+      color: var(--danger); font-size: 13px; font-weight: 500;
+      margin-bottom: 16px; display: none;
+    }
+    .error-msg.show { display: block; }
+
+    @media (max-width: 700px) {
+      .navbar { padding: 0 20px; }
+      .hero { padding: 100px 20px 40px; }
+      .page-section { padding: 100px 20px 40px; }
+      .about-grid, .contact-grid { grid-template-columns: 1fr; }
+      .hero-stats { gap: 24px; flex-wrap: wrap; }
+      .nav-links { display: none; }
+    }
+  </style>
+</head>
+<body>
+  <div class="hero-bg"><div class="grid-overlay"></div></div>
+
+  <!-- Navbar -->
+  <nav class="navbar">
+    <a class="nav-brand" href="#" onclick="showPage('home')">
+      <div class="nav-logo">M</div>
+      <span class="nav-brand-text">Maluti Primary</span>
+    </a>
+    <div class="nav-links">
+      <a onclick="showPage('home')">Home</a>
+      <a onclick="showPage('about')">About</a>
+      <a onclick="showPage('contact')">Contact</a>
+    </div>
+    <div class="nav-actions">
+      <button id="theme-toggle" onclick="MalutiTheme.toggle()">☀️ Light Mode</button>
+      <button class="btn btn-secondary" onclick="openAuth('register')">Register</button>
+      <button class="btn btn-primary" onclick="openAuth('login')">Login</button>
+    </div>
+  </nav>
+
+  <!-- HOME -->
+  <section class="page-section active" id="home">
+    <div class="hero">
+      <div class="hero-inner">
+        <div class="hero-badge">🏫 Welcome to Maluti Primary School</div>
+        <h1 class="hero-title">Education that<br>shapes <span>futures</span></h1>
+        <p class="hero-sub">Empowering young learners in Mokhotlong with quality education, nurturing intellectual, emotional and social development.</p>
+        <div class="hero-actions">
+          <button class="btn btn-primary" onclick="openAuth('login')" style="padding:13px 28px;font-size:15px;">
+            🔐 Portal Login
+          </button>
+          <button class="btn btn-secondary" onclick="showPage('about')" style="padding:13px 28px;font-size:15px;">
+            Learn More →
+          </button>
+        </div>
+        <div class="hero-stats">
+          <div>
+            <div class="hero-stat-val">4</div>
+            <div class="hero-stat-label">User Roles</div>
+          </div>
+          <div class="hero-stat-divider"></div>
+          <div>
+            <div class="hero-stat-val">5+</div>
+            <div class="hero-stat-label">Subjects</div>
+          </div>
+          <div class="hero-stat-divider"></div>
+          <div>
+            <div class="hero-stat-val">100%</div>
+            <div class="hero-stat-label">Dedicated</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ABOUT -->
+  <section class="page-section" id="about">
+    <div class="page-hero">
+      <h1>About <span style="color:var(--accent)">Maluti Primary</span></h1>
+      <p>Providing foundational education in literacy, numeracy and essential life skills to young learners in Mokhotlong, Lesotho.</p>
+    </div>
+    <div class="about-grid">
+      <div class="about-card animate-in">
+        <div class="about-card-icon">📚</div>
+        <h3>Our Mission</h3>
+        <p>To provide foundational education in literacy, numeracy and essential life skills that prepares students for future academic success.</p>
+      </div>
+      <div class="about-card animate-in delay-1">
+        <div class="about-card-icon">🌱</div>
+        <h3>Our Vision</h3>
+        <p>Foster intellectual, emotional and social development in young learners, creating confident and capable citizens of Lesotho.</p>
+      </div>
+      <div class="about-card animate-in delay-2">
+        <div class="about-card-icon">👩‍🏫</div>
+        <h3>Our Teachers</h3>
+        <p>Dedicated educators committed to creating a nurturing and stimulating learning environment where every child can thrive.</p>
+      </div>
+      <div class="about-card animate-in delay-3">
+        <div class="about-card-icon">🤝</div>
+        <h3>Community</h3>
+        <p>We believe in strong partnerships with parents and the community to support each student's holistic development.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- CONTACT -->
+  <section class="page-section" id="contact">
+    <div class="page-hero">
+      <h1>Get in <span style="color:var(--accent)">Touch</span></h1>
+      <p>We'd love to hear from you. Reach out for any inquiries about admissions, curriculum or school events.</p>
+    </div>
+    <div class="contact-grid">
+      <div class="contact-item animate-in">
+        <div class="ci-icon">📧</div>
+        <h4>Email</h4>
+        <p>maluti@school.com</p>
+      </div>
+      <div class="contact-item animate-in delay-1">
+        <div class="ci-icon">📞</div>
+        <h4>Phone</h4>
+        <p>+266 58960929</p>
+      </div>
+      <div class="contact-item animate-in delay-2" style="grid-column:1/-1">
+        <div class="ci-icon">📍</div>
+        <h4>Address</h4>
+        <p>123 Maluti Primary School, Mokhotlong, Lesotho</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- AUTH OVERLAY -->
+  <div class="auth-overlay" id="auth-overlay" onclick="closeAuthOutside(event)">
+    <div class="auth-box">
+      <button class="auth-close" onclick="closeAuth()">✕</button>
+
+      <!-- Login -->
+      <div id="auth-login">
+        <div class="auth-brand">
+          <div class="auth-icon">🔐</div>
+          <h2>Welcome Back</h2>
+          <p>Sign in to your Maluti portal</p>
+        </div>
+        <div class="credentials-hint">
+          <strong>🔑 Demo Credentials</strong>
+          <code>
+            Admin: qhashomosito@gmail.com / admin123<br>
+            Teacher: tanki@gmail.com / teacher123<br>
+            Student: john@gmail.com / student123<br>
+            Parent: qhasho@gmail.com / parent123
+          </code>
+        </div>
+        <div class="error-msg" id="login-error">Invalid email, password, or role.</div>
+        <div class="form-group">
+          <label class="form-label">Role</label>
+          <select class="form-control" id="login-role">
+            <option value="">Select Role</option>
+            <option value="admin">Admin</option>
+            <option value="teacher">Teacher</option>
+            <option value="parent">Parent</option>
+            <option value="student">Student</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Email Address</label>
+          <input type="email" class="form-control" id="login-email" placeholder="your@email.com"/>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Password</label>
+          <input type="password" class="form-control" id="login-password" placeholder="••••••••"/>
+        </div>
+        <button class="btn btn-primary" style="width:100%;justify-content:center;padding:13px;" onclick="doLogin()">
+          Sign In →
+        </button>
+        <p style="text-align:center;margin-top:16px;font-size:13px;color:var(--text-muted)">
+          No account? <a href="#" style="color:var(--accent);font-weight:600" onclick="switchAuth('register')">Register here</a>
+        </p>
+      </div>
+
+      <!-- Register -->
+      <div id="auth-register" style="display:none">
+        <div class="auth-brand">
+          <div class="auth-icon">📝</div>
+          <h2>Create Account</h2>
+          <p>Register for the Maluti portal</p>
+        </div>
+        <div class="error-msg" id="reg-error">Please fill in all fields.</div>
+        <div class="form-group">
+          <label class="form-label">Full Name</label>
+          <input type="text" class="form-control" id="reg-name" placeholder="Your full name"/>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Role</label>
+          <select class="form-control" id="reg-role">
+            <option value="">Select Role</option>
+            <option value="admin">Admin</option>
+            <option value="teacher">Teacher</option>
+            <option value="parent">Parent</option>
+            <option value="student">Student</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Email Address</label>
+          <input type="email" class="form-control" id="reg-email" placeholder="your@email.com"/>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Password</label>
+          <input type="password" class="form-control" id="reg-password" placeholder="Choose a password"/>
+        </div>
+        <button class="btn btn-primary" style="width:100%;justify-content:center;padding:13px;" onclick="doRegister()">
+          Create Account →
+        </button>
+        <p style="text-align:center;margin-top:16px;font-size:13px;color:var(--text-muted)">
+          Already registered? <a href="#" style="color:var(--accent);font-weight:600" onclick="switchAuth('login')">Login here</a>
+        </p>
+      </div>
+    </div>
+  </div>
+
+  <script src="theme.js"></script>
+  <script>
+    MalutiTheme.init();
+
+    // ── Users DB (extends MalutiDB) ──────────────────────────
+    const USERS_KEY = 'maluti_users';
+    const defaultUsers = [
+      { id:1, name:'Mosito Qhasho',  role:'admin',   email:'qhashomosito@gmail.com', password:'admin123'   },
+      { id:2, name:'Tanki Molapo',   role:'teacher', email:'tanki@gmail.com',         password:'teacher123' },
+      { id:3, name:'John Doe',       role:'student', email:'john@gmail.com',           password:'student123' },
+      { id:4, name:'Makali Qhasho',  role:'parent',  email:'qhasho@gmail.com',         password:'parent123'  },
+      { id:5, name:'Tsolo Mokoena',  role:'student', email:'tsolo@gmail.com',          password:'student123' },
+    ];
+
+    function getUsers() {
+      try { return JSON.parse(localStorage.getItem(USERS_KEY)) || defaultUsers; }
+      catch { return defaultUsers; }
+    }
+    function saveUsers(users) { localStorage.setItem(USERS_KEY, JSON.stringify(users)); }
+
+    // ── Page routing ──────────────────────────────────────────
+    function showPage(id) {
+      document.querySelectorAll('.page-section').forEach(s => s.classList.remove('active'));
+      const el = document.getElementById(id);
+      if (el) { el.classList.add('active'); closeAuth(); }
+    }
+
+    // ── Auth modal ────────────────────────────────────────────
+    function openAuth(type) {
+      document.getElementById('auth-overlay').classList.add('open');
+      switchAuth(type);
+    }
+    function closeAuth() { document.getElementById('auth-overlay').classList.remove('open'); }
+    function closeAuthOutside(e) { if (e.target === document.getElementById('auth-overlay')) closeAuth(); }
+    function switchAuth(type) {
+      document.getElementById('auth-login').style.display    = type === 'login'    ? 'block' : 'none';
+      document.getElementById('auth-register').style.display = type === 'register' ? 'block' : 'none';
+    }
+
+    // ── Login ─────────────────────────────────────────────────
+    function doLogin() {
+      const role  = document.getElementById('login-role').value.trim();
+      const email = document.getElementById('login-email').value.trim().toLowerCase();
+      const pass  = document.getElementById('login-password').value;
+      const errEl = document.getElementById('login-error');
+      errEl.classList.remove('show');
+
+      if (!role || !email || !pass) { errEl.textContent='Please fill in all fields.'; errEl.classList.add('show'); return; }
+
+      const users = getUsers();
+      const user  = users.find(u => u.email.toLowerCase() === email && u.password === pass && u.role === role);
+      if (!user) { errEl.textContent='Invalid email, password, or role.'; errEl.classList.add('show'); return; }
+
+      MalutiSession.save(user);
+      MalutiToast.show(`Welcome back, ${user.name}! 👋`, 'success');
+      setTimeout(() => {
+        const pages = { admin:'admin.html', teacher:'teacher.html', student:'student.html', parent:'parent.html' };
+        window.location.href = pages[user.role] || 'index.html';
+      }, 800);
+    }
+
+    // ── Register ──────────────────────────────────────────────
+    function doRegister() {
+      const name  = document.getElementById('reg-name').value.trim();
+      const role  = document.getElementById('reg-role').value;
+      const email = document.getElementById('reg-email').value.trim().toLowerCase();
+      const pass  = document.getElementById('reg-password').value;
+      const errEl = document.getElementById('reg-error');
+      errEl.classList.remove('show');
+
+      if (!name || !role || !email || !pass) { errEl.textContent='Please fill in all fields.'; errEl.classList.add('show'); return; }
+      if (pass.length < 6) { errEl.textContent='Password must be at least 6 characters.'; errEl.classList.add('show'); return; }
+
+      const users = getUsers();
+      if (users.find(u => u.email.toLowerCase() === email)) {
+        errEl.textContent='An account with this email already exists.'; errEl.classList.add('show'); return;
+      }
+      const newUser = { id: Date.now(), name, role, email, password: pass };
+      users.push(newUser);
+      saveUsers(users);
+      MalutiToast.show('Account created! You can now log in.', 'success');
+      switchAuth('login');
+      document.getElementById('login-email').value = email;
+      document.getElementById('login-role').value  = role;
+    }
+
+    // Enter key support
+    document.addEventListener('keydown', e => {
+      if (e.key === 'Escape') closeAuth();
+      if (e.key === 'Enter') {
+        const overlay = document.getElementById('auth-overlay');
+        if (overlay.classList.contains('open')) {
+          if (document.getElementById('auth-login').style.display !== 'none') doLogin();
+          else doRegister();
+        }
+      }
+    });
+  </script>
+</body>
+</html>

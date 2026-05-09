@@ -1,0 +1,313 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Parent Dashboard — Maluti Primary</title>
+  <link rel="stylesheet" href="theme.css"/>
+  <style>
+    .child-card {
+      background: var(--card-bg); border: 1px solid var(--border);
+      border-radius: var(--radius); padding: 20px;
+      cursor: pointer; transition: var(--transition);
+      display:flex; align-items:center; gap:16px;
+    }
+    .child-card:hover, .child-card.selected { border-color:var(--accent); background:rgba(249,115,22,0.05); }
+    .child-avatar {
+      width:48px; height:48px; border-radius:14px;
+      background:linear-gradient(135deg,var(--accent),var(--accent2));
+      display:flex; align-items:center; justify-content:center;
+      font-size:22px; font-weight:800; color:#fff; font-family:var(--font-main); flex-shrink:0;
+    }
+    .subject-bar-row { display:flex; align-items:center; gap:14px; font-size:13.5px; margin-bottom:12px; }
+    .subject-name    { width:90px; color:var(--text-muted); flex-shrink:0; }
+    .subject-track   { flex:1; height:8px; background:var(--bg4); border-radius:99px; overflow:hidden; }
+    .subject-fill    { height:100%; border-radius:99px; transition:width 0.7s ease; }
+    .subject-val     { width:40px; text-align:right; font-family:var(--font-main); font-weight:700; font-size:13px; flex-shrink:0; }
+    .att-chip        { border-radius:8px; padding:10px; text-align:center; font-size:11px; font-weight:600; }
+    .att-chip.present{ background:rgba(34,197,94,0.12); color:var(--success); border:1px solid rgba(34,197,94,0.25); }
+    .att-chip.absent { background:rgba(239,68,68,0.12);  color:var(--danger);  border:1px solid rgba(239,68,68,0.25); }
+    .att-grid        { display:grid; grid-template-columns:repeat(auto-fill,minmax(80px,1fr)); gap:8px; margin-top:12px; }
+  </style>
+</head>
+<body>
+<div class="layout">
+  <aside class="sidebar">
+    <div class="sidebar-brand">
+      <div class="brand-icon">👨‍👩‍👧</div>
+      <h2>Parent Portal</h2>
+      <p>Maluti Primary School</p>
+    </div>
+    <nav class="sidebar-nav">
+      <div class="nav-section-label">Dashboard</div>
+      <a class="nav-item active" onclick="showPanel('overview')"><span class="nav-icon">📊</span>Overview</a>
+      <a class="nav-item" onclick="showPanel('attendance')"><span class="nav-icon">📅</span>Attendance</a>
+      <a class="nav-item" onclick="showPanel('report')"><span class="nav-icon">📋</span>Report Card</a>
+      <a class="nav-item" onclick="showPanel('notices')"><span class="nav-icon">📢</span>Notices</a>
+      <div class="nav-section-label" style="margin-top:10px">System</div>
+      <a class="nav-item" onclick="doLogout()"><span class="nav-icon">🚪</span>Logout</a>
+    </nav>
+    <div class="sidebar-footer">
+      <div class="user-card">
+        <div class="user-avatar" id="user-avatar">P</div>
+        <div class="user-info"><p id="user-name">Parent</p><span>Guardian</span></div>
+      </div>
+    </div>
+  </aside>
+
+  <div class="main">
+    <div class="topbar">
+      <div class="topbar-left">
+        <h1 id="panel-title">Parent Overview</h1>
+        <p id="panel-sub">Monitor your child's progress at Maluti Primary.</p>
+      </div>
+      <div class="topbar-right">
+        <button id="theme-toggle" onclick="MalutiTheme.toggle()">☀️ Light Mode</button>
+      </div>
+    </div>
+
+    <div class="content-area">
+
+      <!-- OVERVIEW -->
+      <div class="panel active" id="panel-overview">
+        <div class="section-header" style="margin-bottom:18px">
+          <div><div class="section-title">Select a Child</div><div class="section-sub">Click a card to view their details below.</div></div>
+        </div>
+        <div id="children-cards" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:16px;margin-bottom:28px"></div>
+        <div id="overview-content"></div>
+      </div>
+
+      <!-- ATTENDANCE -->
+      <div class="panel" id="panel-attendance">
+        <div style="margin-bottom:20px">
+          <label class="form-label">Select Child</label>
+          <select class="form-control" id="att-child-sel" style="max-width:280px" onchange="renderAttendancePanel()"></select>
+        </div>
+        <div id="att-panel-content"></div>
+      </div>
+
+      <!-- REPORT -->
+      <div class="panel" id="panel-report">
+        <div style="margin-bottom:20px;display:flex;gap:12px;align-items:flex-end;flex-wrap:wrap">
+          <div>
+            <label class="form-label">Select Child</label>
+            <select class="form-control" id="rep-child-sel" style="min-width:240px"></select>
+          </div>
+          <button class="btn btn-primary" onclick="renderReportPanel()">Generate →</button>
+        </div>
+        <div id="rep-panel-content"></div>
+      </div>
+
+      <!-- NOTICES -->
+      <div class="panel" id="panel-notices">
+        <div style="display:grid;gap:16px;max-width:680px" id="notices-content"></div>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<script src="theme.js"></script>
+<script>
+  MalutiTheme.init();
+  const user = MalutiSession.require('parent');
+  if (user) {
+    document.getElementById('user-name').textContent   = user.name;
+    document.getElementById('user-avatar').textContent = user.name[0].toUpperCase();
+  }
+
+  const NOTICES = [
+    { title:'Term 2 Fees Due', body:'Please ensure school fees for Term 2 are paid by 30 May 2025. Contact admin for payment plans.', date:'2025-05-01', type:'warning' },
+    { title:'Parent-Teacher Meeting', body:'A parent-teacher meeting is scheduled for 15 May 2025 at 2:00 PM. All parents are encouraged to attend.', date:'2025-04-28', type:'info' },
+    { title:'School Holiday', body:'The school will be closed on 25 May 2025 for Africa Day. Classes resume on 26 May.', date:'2025-04-20', type:'success' },
+  ];
+
+  const titles = { overview:'Parent Overview', attendance:'Child Attendance', report:'Report Card', notices:'School Notices' };
+  const subs   = { overview:"Monitor your child's progress.", attendance:"View your child's attendance history.", report:"Generate your child's report card.", notices:'Important announcements from the school.' };
+
+  let selectedChild = null;
+
+  function showPanel(id) {
+    document.querySelectorAll('.panel').forEach(p=>p.classList.remove('active'));
+    document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'));
+    document.getElementById('panel-'+id).classList.add('active');
+    document.getElementById('panel-title').textContent = titles[id]||id;
+    document.getElementById('panel-sub').textContent   = subs[id]||'';
+    event.currentTarget?.classList.add('active');
+    if (id==='overview')    renderOverview();
+    if (id==='attendance')  { populateChildDropdowns(); renderAttendancePanel(); }
+    if (id==='report')      { populateChildDropdowns(); }
+    if (id==='notices')     renderNotices();
+  }
+
+  function populateChildDropdowns() {
+    const db = MalutiDB.get();
+    const opts = db.students.map(s=>`<option value="${s.name}">${s.name}</option>`).join('');
+    ['att-child-sel','rep-child-sel'].forEach(id=>{
+      const el=document.getElementById(id); if(el) el.innerHTML=opts;
+    });
+  }
+
+  // ── Overview ──────────────────────────────────────────────────────────
+  function renderOverview() {
+    const db = MalutiDB.get();
+    const cards = document.getElementById('children-cards');
+    cards.innerHTML = db.students.map(s=>{
+      const grades = db.grades.filter(g=>g.student_name===s.name);
+      const avg = grades.length ? Math.round(grades.reduce((a,g)=>a+g.grade,0)/grades.length) : null;
+      const att = db.attendance.filter(a=>a.student_name===s.name);
+      const attPct = att.length ? Math.round((att.filter(a=>a.status==='Present').length/att.length)*100) : null;
+      return `<div class="child-card ${selectedChild===s.name?'selected':''}" onclick="selectChild('${s.name}')">
+        <div class="child-avatar">${s.name[0]}</div>
+        <div>
+          <div style="font-family:var(--font-main);font-weight:700;font-size:15px">${s.name}</div>
+          <div style="font-size:12px;color:var(--text-muted);margin-top:3px">${s.class}</div>
+          <div style="display:flex;gap:12px;margin-top:8px">
+            ${avg!==null?`<span class="badge ${avg>=50?'badge-success':'badge-danger'}">${avg}% avg</span>`:''}
+            ${attPct!==null?`<span class="badge ${attPct>=75?'badge-success':'badge-warning'}">${attPct}% att</span>`:''}
+          </div>
+        </div>
+      </div>`;
+    }).join('');
+
+    if (selectedChild) renderChildDetail(selectedChild);
+    else document.getElementById('overview-content').innerHTML = `<p style="color:var(--text-muted);font-size:14px">Select a child above to see their details.</p>`;
+  }
+
+  function selectChild(name) {
+    selectedChild = name;
+    renderOverview();
+  }
+
+  function renderChildDetail(name) {
+    const db = MalutiDB.get();
+    const grades = db.grades.filter(g=>g.student_name===name);
+    const att    = db.attendance.filter(a=>a.student_name===name);
+    const avg    = grades.length ? Math.round(grades.reduce((a,g)=>a+g.grade,0)/grades.length) : 0;
+    const present= att.filter(a=>a.status==='Present').length;
+    const attPct = att.length ? Math.round((present/att.length)*100) : 0;
+    const COLORS = ['#f97316','#3b82f6','#22c55e','#f59e0b','#a855f7'];
+
+    document.getElementById('overview-content').innerHTML = `
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:20px">
+        <div class="card animate-in">
+          <div class="section-title" style="margin-bottom:16px">Grades — ${name}</div>
+          ${grades.length ? grades.map((g,i)=>`
+            <div class="subject-bar-row">
+              <span class="subject-name">${g.subject}</span>
+              <div class="subject-track"><div class="subject-fill" style="width:${g.grade}%;background:${COLORS[i%5]}"></div></div>
+              <span class="subject-val" style="color:${COLORS[i%5]}">${g.grade}%</span>
+            </div>`).join('')
+            + `<div style="padding-top:12px;border-top:1px solid var(--border);margin-top:4px;display:flex;justify-content:space-between;align-items:center">
+                <strong style="font-family:var(--font-main)">Average</strong>
+                <span class="badge ${avg>=50?'badge-success':'badge-danger'}" style="font-size:13px">${avg}% — ${avg>=50?'PASS':'FAIL'}</span>
+              </div>`
+          : '<p style="color:var(--text-muted);font-size:13px">No grades recorded.</p>'}
+        </div>
+        <div class="card animate-in delay-1">
+          <div class="section-title" style="margin-bottom:14px">Attendance</div>
+          <div style="display:flex;gap:20px;margin-bottom:16px">
+            <div><div style="font-size:26px;font-weight:800;font-family:var(--font-main);color:var(--success)">${present}</div><div style="font-size:11px;color:var(--text-muted)">Present</div></div>
+            <div><div style="font-size:26px;font-weight:800;font-family:var(--font-main);color:var(--danger)">${att.length-present}</div><div style="font-size:11px;color:var(--text-muted)">Absent</div></div>
+            <div><div style="font-size:26px;font-weight:800;font-family:var(--font-main);color:${attPct>=75?'var(--success)':'var(--warning)'}">${attPct}%</div><div style="font-size:11px;color:var(--text-muted)">Rate</div></div>
+          </div>
+          <div style="height:8px;background:var(--bg4);border-radius:99px;overflow:hidden">
+            <div style="width:${attPct}%;height:100%;background:${attPct>=75?'var(--success)':'var(--warning)'};border-radius:99px"></div>
+          </div>
+          <div class="att-grid">${att.slice(-12).reverse().map(a=>`
+            <div class="att-chip ${a.status.toLowerCase()}">
+              <div>${a.date.slice(5)}</div><div style="margin-top:2px">${a.status==='Present'?'✅':'❌'}</div>
+            </div>`).join('')||'<p style="color:var(--text-muted)">No records</p>'}</div>
+        </div>
+      </div>`;
+  }
+
+  // ── Attendance Panel ──────────────────────────────────────────────────
+  function renderAttendancePanel() {
+    const name = document.getElementById('att-child-sel')?.value;
+    if (!name) return;
+    const db = MalutiDB.get();
+    const att = db.attendance.filter(a=>a.student_name===name);
+    const present = att.filter(a=>a.status==='Present').length;
+    const attPct  = att.length ? Math.round((present/att.length)*100) : 0;
+    document.getElementById('att-panel-content').innerHTML = `
+      <div class="stat-grid animate-in" style="margin-bottom:24px">
+        <div class="stat-card"><div class="stat-icon" style="background:rgba(34,197,94,0.15)">✅</div><div class="stat-value">${present}</div><div class="stat-label">Days Present</div></div>
+        <div class="stat-card"><div class="stat-icon" style="background:rgba(239,68,68,0.15)">❌</div><div class="stat-value">${att.length-present}</div><div class="stat-label">Days Absent</div></div>
+        <div class="stat-card"><div class="stat-icon" style="background:rgba(59,130,246,0.15)">📊</div><div class="stat-value">${attPct}%</div><div class="stat-label">Rate</div></div>
+      </div>
+      <div class="card animate-in">
+        <div class="section-title" style="margin-bottom:14px">Attendance History</div>
+        <div class="table-wrap"><table>
+          <thead><tr><th>Date</th><th>Status</th></tr></thead>
+          <tbody>${att.slice().reverse().map(a=>`<tr>
+            <td style="color:var(--text-muted)">${a.date}</td>
+            <td><span class="badge ${a.status==='Present'?'badge-success':'badge-danger'}">${a.status}</span></td>
+          </tr>`).join('')||'<tr><td colspan="2" style="text-align:center;color:var(--text-muted);padding:20px">No records</td></tr>'}</tbody>
+        </table></div>
+      </div>`;
+  }
+
+  // ── Report Panel ──────────────────────────────────────────────────────
+  function renderReportPanel() {
+    const name = document.getElementById('rep-child-sel')?.value;
+    if (!name) return;
+    const db = MalutiDB.get();
+    const grades = db.grades.filter(g=>g.student_name===name);
+    const att    = db.attendance.filter(a=>a.student_name===name);
+    const avg    = grades.length ? Math.round(grades.reduce((a,g)=>a+g.grade,0)/grades.length) : 0;
+    const present= att.filter(a=>a.status==='Present').length;
+    const attPct = att.length ? Math.round((present/att.length)*100) : 0;
+    const pass   = avg >= 50;
+    const student= db.students.find(s=>s.name===name);
+
+    document.getElementById('rep-panel-content').innerHTML = `
+      <div class="card animate-in" style="max-width:600px;overflow:hidden;padding:0">
+        <div style="background:linear-gradient(135deg,var(--accent),#1e293b);padding:28px 32px;color:#fff">
+          <h2 style="font-family:var(--font-main);font-size:22px">📋 Report Card</h2>
+          <p style="opacity:0.8;margin-top:4px;font-size:13px">${name} · ${student?.class||'Maluti Primary'} · ${new Date().toLocaleDateString()}</p>
+        </div>
+        <div style="padding:28px 32px">
+          <div style="text-align:center;margin-bottom:24px">
+            <div style="width:72px;height:72px;border-radius:50%;border:4px solid ${pass?'var(--success)':'var(--danger)'};display:flex;align-items:center;justify-content:center;margin:0 auto 10px;font-family:var(--font-main);font-size:22px;font-weight:800;color:${pass?'var(--success)':'var(--danger)'}">${avg}%</div>
+            <div style="font-family:var(--font-main);font-weight:700;color:${pass?'var(--success)':'var(--danger)'}">${pass?'✅ PASSED':'❌ FAILED'}</div>
+          </div>
+          ${grades.length ? `<div class="table-wrap"><table>
+            <thead><tr><th>Subject</th><th>Grade</th><th>Status</th></tr></thead>
+            <tbody>${grades.map(g=>`<tr>
+              <td>${g.subject}</td><td><strong>${g.grade}%</strong></td>
+              <td><span class="badge ${g.grade>=50?'badge-success':'badge-danger'}">${g.grade>=50?'Pass':'Fail'}</span></td>
+            </tr>`).join('')}
+            <tr style="background:var(--bg3)"><td><strong>Average</strong></td><td><strong>${avg}%</strong></td>
+              <td><span class="badge ${pass?'badge-success':'badge-danger'}">${pass?'PASS':'FAIL'}</span></td></tr>
+            </tbody></table></div>` : '<p style="color:var(--text-muted)">No grades recorded.</p>'}
+          <div style="margin-top:20px;padding:14px;background:var(--bg3);border-radius:10px">
+            <strong style="font-family:var(--font-main);font-size:13px">Attendance</strong>
+            <p style="font-size:14px;margin-top:6px">${present} / ${att.length} days — <strong style="color:${attPct>=75?'var(--success)':'var(--warning)'}">${attPct}%</strong></p>
+          </div>
+        </div>
+      </div>`;
+  }
+
+  // ── Notices ───────────────────────────────────────────────────────────
+  function renderNotices() {
+    const typeColors = { warning:'var(--warning)', info:'var(--accent2)', success:'var(--success)' };
+    const typeIcons  = { warning:'⚠️', info:'ℹ️', success:'✅' };
+    document.getElementById('notices-content').innerHTML = NOTICES.map(n=>`
+      <div class="card animate-in" style="border-left:4px solid ${typeColors[n.type]}">
+        <div style="display:flex;align-items:flex-start;gap:14px">
+          <div style="font-size:24px">${typeIcons[n.type]}</div>
+          <div style="flex:1">
+            <div style="font-family:var(--font-main);font-weight:700;margin-bottom:6px">${n.title}</div>
+            <p style="font-size:14px;color:var(--text-muted);line-height:1.6">${n.body}</p>
+            <div style="font-size:11px;color:var(--text-dim);margin-top:10px">${n.date}</div>
+          </div>
+        </div>
+      </div>`).join('');
+  }
+
+  function doLogout() { MalutiSession.clear(); window.location.href='index.html'; }
+  renderOverview();
+</script>
+</body>
+</html>

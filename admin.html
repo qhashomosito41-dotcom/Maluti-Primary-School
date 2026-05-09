@@ -1,0 +1,443 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Admin Dashboard — Maluti Primary</title>
+  <link rel="stylesheet" href="theme.css"/>
+  <style>
+    .form-row { display:grid; grid-template-columns:1fr 1fr; gap:14px; }
+    .progress-bar { height:6px; border-radius:99px; background:var(--bg4); overflow:hidden; margin-top:8px; }
+    .progress-fill { height:100%; border-radius:99px; background:linear-gradient(90deg,var(--accent),var(--accent2)); transition:width 0.6s ease; }
+    .overview-grid { display:grid; grid-template-columns:1fr 1fr; gap:20px; }
+    .recent-list { list-style:none; }
+    .recent-list li {
+      display:flex; align-items:center; gap:12px;
+      padding:11px 0; border-bottom:1px solid var(--border);
+      font-size:13.5px;
+    }
+    .recent-list li:last-child { border-bottom:none; }
+    .list-dot { width:8px;height:8px;border-radius:50%;flex-shrink:0; }
+  </style>
+</head>
+<body>
+<div class="layout">
+
+  <!-- Sidebar -->
+  <aside class="sidebar">
+    <div class="sidebar-brand">
+      <div class="brand-icon">🏫</div>
+      <h2>Maluti Primary</h2>
+      <p>School Management System</p>
+    </div>
+    <nav class="sidebar-nav">
+      <div class="nav-section-label">Dashboard</div>
+      <a class="nav-item active" onclick="showPanel('overview')"><span class="nav-icon">📊</span>Overview</a>
+
+      <div class="nav-section-label" style="margin-top:10px">Students</div>
+      <a class="nav-item" onclick="showPanel('add-student')"><span class="nav-icon">➕</span>Add Student</a>
+      <a class="nav-item" onclick="showPanel('manage-students')"><span class="nav-icon">👥</span>Manage Students</a>
+      <a class="nav-item" onclick="showPanel('academic')"><span class="nav-icon">📋</span>Academic Records</a>
+
+      <div class="nav-section-label" style="margin-top:10px">Teachers</div>
+      <a class="nav-item" onclick="showPanel('add-teacher')"><span class="nav-icon">👩‍🏫</span>Add Teacher</a>
+      <a class="nav-item" onclick="showPanel('manage-teachers')"><span class="nav-icon">📌</span>Manage Teachers</a>
+
+      <div class="nav-section-label" style="margin-top:10px">Finance</div>
+      <a class="nav-item" onclick="showPanel('fees')"><span class="nav-icon">💳</span>Fee Payments</a>
+
+      <div class="nav-section-label" style="margin-top:10px">System</div>
+      <a class="nav-item" onclick="doLogout()"><span class="nav-icon">🚪</span>Logout</a>
+    </nav>
+    <div class="sidebar-footer">
+      <div class="user-card">
+        <div class="user-avatar" id="user-avatar">A</div>
+        <div class="user-info">
+          <p id="user-name">Admin</p>
+          <span>Administrator</span>
+        </div>
+      </div>
+    </div>
+  </aside>
+
+  <!-- Main -->
+  <div class="main">
+    <div class="topbar">
+      <div class="topbar-left">
+        <h1 id="panel-title">Dashboard Overview</h1>
+        <p id="panel-sub">Welcome back! Here's what's happening at Maluti Primary.</p>
+      </div>
+      <div class="topbar-right">
+        <button id="theme-toggle" onclick="MalutiTheme.toggle()">☀️ Light Mode</button>
+      </div>
+    </div>
+
+    <div class="content-area">
+
+      <!-- ── OVERVIEW ── -->
+      <div class="panel active" id="panel-overview">
+        <div class="stat-grid" id="stat-grid"></div>
+        <div class="overview-grid">
+          <div class="card animate-in">
+            <div class="section-header" style="margin-bottom:16px">
+              <div><div class="section-title">Recent Students</div></div>
+            </div>
+            <ul class="recent-list" id="recent-students"></ul>
+          </div>
+          <div class="card animate-in delay-1">
+            <div class="section-header" style="margin-bottom:16px">
+              <div><div class="section-title">Fee Collection Status</div></div>
+            </div>
+            <div id="fee-overview"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ── ADD STUDENT ── -->
+      <div class="panel" id="panel-add-student">
+        <div class="card" style="max-width:520px">
+          <h3 style="font-family:var(--font-main);margin-bottom:22px">Add New Student</h3>
+          <div class="form-group"><label class="form-label">Full Name</label><input class="form-control" id="as-name" placeholder="Student full name"/></div>
+          <div class="form-row">
+            <div class="form-group"><label class="form-label">Class</label><input class="form-control" id="as-class" placeholder="e.g. Class 1"/></div>
+            <div class="form-group"><label class="form-label">Age</label><input type="number" class="form-control" id="as-age" placeholder="Age"/></div>
+          </div>
+          <button class="btn btn-primary" onclick="addStudent()">➕ Add Student</button>
+        </div>
+      </div>
+
+      <!-- ── MANAGE STUDENTS ── -->
+      <div class="panel" id="panel-manage-students">
+        <div class="section-header">
+          <div><div class="section-title">All Students</div><div class="section-sub">View, edit or remove students</div></div>
+        </div>
+        <div class="table-wrap"><table>
+          <thead><tr><th>ID</th><th>Name</th><th>Class</th><th>Age</th><th>Actions</th></tr></thead>
+          <tbody id="students-tbody"></tbody>
+        </table></div>
+      </div>
+
+      <!-- ── ACADEMIC RECORDS ── -->
+      <div class="panel" id="panel-academic">
+        <div class="card" style="max-width:520px;margin-bottom:24px">
+          <h3 style="font-family:var(--font-main);margin-bottom:22px">Update Academic Details</h3>
+          <div class="form-group"><label class="form-label">Student ID</label><input type="number" class="form-control" id="ac-id" placeholder="Student ID"/></div>
+          <div class="form-row">
+            <div class="form-group"><label class="form-label">Subject</label><input class="form-control" id="ac-subject" placeholder="Subject name"/></div>
+            <div class="form-group"><label class="form-label">Grade (%)</label><input type="number" class="form-control" id="ac-grade" placeholder="0-100"/></div>
+          </div>
+          <div class="form-group"><label class="form-label">Remarks</label><input class="form-control" id="ac-remarks" placeholder="Optional remarks"/></div>
+          <button class="btn btn-primary" onclick="updateAcademic()">💾 Save Academic Record</button>
+        </div>
+      </div>
+
+      <!-- ── ADD TEACHER ── -->
+      <div class="panel" id="panel-add-teacher">
+        <div class="card" style="max-width:520px">
+          <h3 style="font-family:var(--font-main);margin-bottom:22px">Add New Teacher</h3>
+          <div class="form-group"><label class="form-label">Full Name</label><input class="form-control" id="at-name" placeholder="Teacher full name"/></div>
+          <div class="form-row">
+            <div class="form-group"><label class="form-label">Subject</label><input class="form-control" id="at-subject" placeholder="e.g. Mathematics"/></div>
+            <div class="form-group"><label class="form-label">Class</label><input class="form-control" id="at-class" placeholder="e.g. Class 5"/></div>
+          </div>
+          <button class="btn btn-primary" onclick="addTeacher()">➕ Add Teacher</button>
+        </div>
+      </div>
+
+      <!-- ── MANAGE TEACHERS ── -->
+      <div class="panel" id="panel-manage-teachers">
+        <div class="section-header">
+          <div><div class="section-title">All Teachers</div><div class="section-sub">Manage teaching staff</div></div>
+        </div>
+        <div class="table-wrap"><table>
+          <thead><tr><th>ID</th><th>Name</th><th>Subject</th><th>Class</th><th>Actions</th></tr></thead>
+          <tbody id="teachers-tbody"></tbody>
+        </table></div>
+      </div>
+
+      <!-- ── FEES ── -->
+      <div class="panel" id="panel-fees">
+        <div class="card" style="max-width:520px;margin-bottom:24px">
+          <h3 style="font-family:var(--font-main);margin-bottom:22px">Record Fee Payment</h3>
+          <div class="form-row">
+            <div class="form-group"><label class="form-label">Student ID</label><input type="number" class="form-control" id="fee-sid" placeholder="Student ID"/></div>
+            <div class="form-group"><label class="form-label">Amount (M)</label><input type="number" class="form-control" id="fee-amount" placeholder="500"/></div>
+          </div>
+          <div class="form-group"><label class="form-label">Status</label>
+            <select class="form-control" id="fee-status">
+              <option value="Paid">Paid</option>
+              <option value="Pending">Pending</option>
+            </select>
+          </div>
+          <button class="btn btn-primary" onclick="recordFee()">💳 Record Payment</button>
+        </div>
+        <div class="section-header"><div class="section-title">Payment History</div></div>
+        <div class="table-wrap"><table>
+          <thead><tr><th>Student</th><th>Amount</th><th>Status</th><th>Date</th></tr></thead>
+          <tbody id="fees-tbody"></tbody>
+        </table></div>
+      </div>
+
+    </div><!-- /content-area -->
+  </div><!-- /main -->
+</div>
+
+<!-- Edit Student Modal -->
+<div class="modal-backdrop" id="edit-student-modal">
+  <div class="modal">
+    <h3 class="modal-title">✏️ Edit Student</h3>
+    <input type="hidden" id="edit-s-id"/>
+    <div class="form-group"><label class="form-label">Name</label><input class="form-control" id="edit-s-name"/></div>
+    <div class="form-row">
+      <div class="form-group"><label class="form-label">Class</label><input class="form-control" id="edit-s-class"/></div>
+      <div class="form-group"><label class="form-label">Age</label><input type="number" class="form-control" id="edit-s-age"/></div>
+    </div>
+    <div style="display:flex;gap:10px;margin-top:8px">
+      <button class="btn btn-primary" onclick="saveEditStudent()">Save Changes</button>
+      <button class="btn btn-secondary" onclick="closeModal('edit-student-modal')">Cancel</button>
+    </div>
+  </div>
+</div>
+
+<!-- Edit Teacher Modal -->
+<div class="modal-backdrop" id="edit-teacher-modal">
+  <div class="modal">
+    <h3 class="modal-title">✏️ Edit Teacher</h3>
+    <input type="hidden" id="edit-t-id"/>
+    <div class="form-group"><label class="form-label">Name</label><input class="form-control" id="edit-t-name"/></div>
+    <div class="form-row">
+      <div class="form-group"><label class="form-label">Subject</label><input class="form-control" id="edit-t-subject"/></div>
+      <div class="form-group"><label class="form-label">Class</label><input class="form-control" id="edit-t-class"/></div>
+    </div>
+    <div style="display:flex;gap:10px;margin-top:8px">
+      <button class="btn btn-primary" onclick="saveEditTeacher()">Save Changes</button>
+      <button class="btn btn-secondary" onclick="closeModal('edit-teacher-modal')">Cancel</button>
+    </div>
+  </div>
+</div>
+
+<script src="theme.js"></script>
+<script>
+  MalutiTheme.init();
+  const user = MalutiSession.require('admin');
+  if (user) {
+    document.getElementById('user-name').textContent = user.name;
+    document.getElementById('user-avatar').textContent = user.name[0].toUpperCase();
+  }
+
+  const titles = {
+    overview:'Dashboard Overview', 'add-student':'Add Student', 'manage-students':'Manage Students',
+    academic:'Academic Records', 'add-teacher':'Add Teacher', 'manage-teachers':'Manage Teachers', fees:'Fee Payments'
+  };
+  const subs = {
+    overview:"Welcome back! Here's what's happening.",
+    'add-student':'Register a new student into the system.',
+    'manage-students':'View, update and remove student records.',
+    academic:'Update subject grades and remarks for students.',
+    'add-teacher':'Register a new teacher into the system.',
+    'manage-teachers':'View, update and remove teacher records.',
+    fees:'Record and view student fee payments.'
+  };
+
+  function showPanel(id) {
+    document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+    document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+    document.getElementById('panel-'+id).classList.add('active');
+    document.getElementById('panel-title').textContent = titles[id] || id;
+    document.getElementById('panel-sub').textContent = subs[id] || '';
+    event.currentTarget?.classList.add('active');
+    if (id==='overview') renderOverview();
+    if (id==='manage-students') renderStudentsTable();
+    if (id==='manage-teachers') renderTeachersTable();
+    if (id==='fees') renderFees();
+  }
+
+  function closeModal(id) { document.getElementById(id).classList.remove('open'); }
+
+  // ── Overview ─────────────────────────────────────────────────────────
+  function renderOverview() {
+    const db = MalutiDB.get();
+    const paid = db.fees.filter(f=>f.status==='Paid').length;
+    const pending = db.fees.filter(f=>f.status==='Pending').length;
+    const pct = db.fees.length ? Math.round((paid/db.fees.length)*100) : 0;
+    document.getElementById('stat-grid').innerHTML = `
+      <div class="stat-card animate-in"><div class="stat-icon" style="background:rgba(249,115,22,0.15)">👥</div>
+        <div class="stat-value">${db.students.length}</div><div class="stat-label">Total Students</div>
+        <div class="stat-trend up">↑ Active</div></div>
+      <div class="stat-card animate-in delay-1"><div class="stat-icon" style="background:rgba(59,130,246,0.15)">👩‍🏫</div>
+        <div class="stat-value">${db.teachers.length}</div><div class="stat-label">Total Teachers</div>
+        <div class="stat-trend up">↑ Active</div></div>
+      <div class="stat-card animate-in delay-2"><div class="stat-icon" style="background:rgba(34,197,94,0.15)">✅</div>
+        <div class="stat-value">${db.attendance.filter(a=>a.status==='Present').length}</div><div class="stat-label">Present Today</div>
+        <div class="stat-trend up">↑ Attendance</div></div>
+      <div class="stat-card animate-in delay-3"><div class="stat-icon" style="background:rgba(245,158,11,0.15)">💳</div>
+        <div class="stat-value">${paid}</div><div class="stat-label">Fees Paid</div>
+        <div class="stat-trend ${pending>0?'down':'up'}">${pending} pending</div></div>
+    `;
+    const rl = document.getElementById('recent-students');
+    rl.innerHTML = db.students.slice(-5).reverse().map(s=>`
+      <li><div class="list-dot" style="background:var(--accent)"></div>
+        <span>${s.name}</span><span style="margin-left:auto;color:var(--text-muted);font-size:12px">${s.class}</span></li>`).join('');
+    const fo = document.getElementById('fee-overview');
+    fo.innerHTML = `
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
+        <span style="font-size:13px;color:var(--text-muted)">Collection Rate</span>
+        <span style="font-family:var(--font-main);font-weight:700;color:var(--accent)">${pct}%</span>
+      </div>
+      <div class="progress-bar"><div class="progress-fill" style="width:${pct}%"></div></div>
+      <div style="display:flex;gap:16px;margin-top:16px">
+        <div><div style="font-size:20px;font-weight:800;font-family:var(--font-main);color:var(--success)">${paid}</div><div style="font-size:11px;color:var(--text-muted)">Paid</div></div>
+        <div><div style="font-size:20px;font-weight:800;font-family:var(--font-main);color:var(--warning)">${pending}</div><div style="font-size:11px;color:var(--text-muted)">Pending</div></div>
+      </div>
+    `;
+  }
+
+  // ── Students ──────────────────────────────────────────────────────────
+  function addStudent() {
+    const name=document.getElementById('as-name').value.trim();
+    const cl=document.getElementById('as-class').value.trim();
+    const age=parseInt(document.getElementById('as-age').value);
+    if(!name||!cl||!age){MalutiToast.show('Please fill all fields','warning');return;}
+    const db=MalutiDB.get();
+    db.students.push({id:db.nextId.students++, name, class:cl, age});
+    MalutiDB.set(db);
+    MalutiToast.show(`Student "${name}" added!`,'success');
+    document.getElementById('as-name').value='';document.getElementById('as-class').value='';document.getElementById('as-age').value='';
+  }
+
+  function renderStudentsTable() {
+    const db=MalutiDB.get();
+    document.getElementById('students-tbody').innerHTML = db.students.map(s=>`
+      <tr>
+        <td><span class="badge badge-info">${s.id}</span></td>
+        <td><strong>${s.name}</strong></td>
+        <td>${s.class}</td>
+        <td>${s.age}</td>
+        <td><div style="display:flex;gap:8px">
+          <button class="btn btn-secondary btn-sm" onclick="openEditStudent(${s.id})">✏️ Edit</button>
+          <button class="btn btn-danger btn-sm" onclick="deleteStudent(${s.id})">🗑️ Delete</button>
+        </div></td>
+      </tr>`).join('');
+  }
+
+  function openEditStudent(id) {
+    const db=MalutiDB.get(); const s=db.students.find(s=>s.id===id); if(!s)return;
+    document.getElementById('edit-s-id').value=s.id;
+    document.getElementById('edit-s-name').value=s.name;
+    document.getElementById('edit-s-class').value=s.class;
+    document.getElementById('edit-s-age').value=s.age;
+    document.getElementById('edit-student-modal').classList.add('open');
+  }
+  function saveEditStudent() {
+    const id=parseInt(document.getElementById('edit-s-id').value);
+    const db=MalutiDB.get(); const i=db.students.findIndex(s=>s.id===id); if(i<0)return;
+    db.students[i].name=document.getElementById('edit-s-name').value.trim();
+    db.students[i].class=document.getElementById('edit-s-class').value.trim();
+    db.students[i].age=parseInt(document.getElementById('edit-s-age').value);
+    MalutiDB.set(db); closeModal('edit-student-modal');
+    renderStudentsTable(); MalutiToast.show('Student updated!','success');
+  }
+  function deleteStudent(id) {
+    if(!confirm('Delete this student?'))return;
+    const db=MalutiDB.get(); db.students=db.students.filter(s=>s.id!==id);
+    MalutiDB.set(db); renderStudentsTable(); MalutiToast.show('Student removed','info');
+  }
+
+  // ── Academic ──────────────────────────────────────────────────────────
+  function updateAcademic() {
+    const id=parseInt(document.getElementById('ac-id').value);
+    const subject=document.getElementById('ac-subject').value.trim();
+    const grade=parseInt(document.getElementById('ac-grade').value);
+    const remarks=document.getElementById('ac-remarks').value.trim();
+    if(!id||!subject||isNaN(grade)){MalutiToast.show('Fill in all required fields','warning');return;}
+    const db=MalutiDB.get();
+    const student=db.students.find(s=>s.id===id);
+    if(!student){MalutiToast.show('Student ID not found','error');return;}
+    const existing=db.grades.findIndex(g=>g.student_name===student.name&&g.subject===subject);
+    if(existing>=0){ db.grades[existing].grade=grade; db.grades[existing].remarks=remarks; }
+    else db.grades.push({id:db.nextId.grades++,student_name:student.name,subject,grade,remarks});
+    MalutiDB.set(db); MalutiToast.show(`Grade updated for ${student.name}`,'success');
+  }
+
+  // ── Teachers ──────────────────────────────────────────────────────────
+  function addTeacher() {
+    const name=document.getElementById('at-name').value.trim();
+    const subject=document.getElementById('at-subject').value.trim();
+    const cl=document.getElementById('at-class').value.trim();
+    if(!name||!subject||!cl){MalutiToast.show('Please fill all fields','warning');return;}
+    const db=MalutiDB.get();
+    db.teachers.push({id:db.nextId.teachers++,name,subject,class:cl});
+    MalutiDB.set(db); MalutiToast.show(`Teacher "${name}" added!`,'success');
+    document.getElementById('at-name').value='';document.getElementById('at-subject').value='';document.getElementById('at-class').value='';
+  }
+
+  function renderTeachersTable() {
+    const db=MalutiDB.get();
+    document.getElementById('teachers-tbody').innerHTML = db.teachers.map(t=>`
+      <tr>
+        <td><span class="badge badge-info">${t.id}</span></td>
+        <td><strong>${t.name}</strong></td>
+        <td>${t.subject}</td>
+        <td>${t.class}</td>
+        <td><div style="display:flex;gap:8px">
+          <button class="btn btn-secondary btn-sm" onclick="openEditTeacher(${t.id})">✏️ Edit</button>
+          <button class="btn btn-danger btn-sm" onclick="deleteTeacher(${t.id})">🗑️ Delete</button>
+        </div></td>
+      </tr>`).join('');
+  }
+
+  function openEditTeacher(id) {
+    const db=MalutiDB.get(); const t=db.teachers.find(t=>t.id===id); if(!t)return;
+    document.getElementById('edit-t-id').value=t.id;
+    document.getElementById('edit-t-name').value=t.name;
+    document.getElementById('edit-t-subject').value=t.subject;
+    document.getElementById('edit-t-class').value=t.class;
+    document.getElementById('edit-teacher-modal').classList.add('open');
+  }
+  function saveEditTeacher() {
+    const id=parseInt(document.getElementById('edit-t-id').value);
+    const db=MalutiDB.get(); const i=db.teachers.findIndex(t=>t.id===id); if(i<0)return;
+    db.teachers[i].name=document.getElementById('edit-t-name').value.trim();
+    db.teachers[i].subject=document.getElementById('edit-t-subject').value.trim();
+    db.teachers[i].class=document.getElementById('edit-t-class').value.trim();
+    MalutiDB.set(db); closeModal('edit-teacher-modal');
+    renderTeachersTable(); MalutiToast.show('Teacher updated!','success');
+  }
+  function deleteTeacher(id) {
+    if(!confirm('Delete this teacher?'))return;
+    const db=MalutiDB.get(); db.teachers=db.teachers.filter(t=>t.id!==id);
+    MalutiDB.set(db); renderTeachersTable(); MalutiToast.show('Teacher removed','info');
+  }
+
+  // ── Fees ──────────────────────────────────────────────────────────────
+  function recordFee() {
+    const sid=parseInt(document.getElementById('fee-sid').value);
+    const amount=parseFloat(document.getElementById('fee-amount').value);
+    const status=document.getElementById('fee-status').value;
+    if(!sid||!amount){MalutiToast.show('Fill in student ID and amount','warning');return;}
+    const db=MalutiDB.get();
+    const student=db.students.find(s=>s.id===sid);
+    if(!student){MalutiToast.show('Student not found','error');return;}
+    db.fees.push({id:db.nextId.fees++,student_id:sid,student_name:student.name,amount,status,date:new Date().toISOString().split('T')[0]});
+    MalutiDB.set(db); renderFees(); MalutiToast.show(`Payment recorded for ${student.name}`,'success');
+  }
+  function renderFees() {
+    const db=MalutiDB.get();
+    document.getElementById('fees-tbody').innerHTML = db.fees.map(f=>`
+      <tr>
+        <td><strong>${f.student_name}</strong></td>
+        <td>M ${f.amount}</td>
+        <td><span class="badge ${f.status==='Paid'?'badge-success':'badge-warning'}">${f.status}</span></td>
+        <td style="color:var(--text-muted)">${f.date}</td>
+      </tr>`).join('');
+  }
+
+  function doLogout() {
+    MalutiSession.clear(); window.location.href='index.html';
+  }
+
+  // Init
+  renderOverview();
+</script>
+</body>
+</html>
